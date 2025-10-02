@@ -11,7 +11,7 @@ pipeline {
                 bat """
                     @echo off
                     echo "=== 验证Python313路径及版本 ==="
-                    ${PYTHON_PATH} --version  // 仅保留此关键验证（成功即证明路径正确）
+                    ${PYTHON_PATH} --version
                     echo "Python路径验证通过！"
                 """
             }
@@ -37,6 +37,7 @@ pipeline {
                     @echo off
                     ${PYTHON_PATH} -m pip install --upgrade pip
                     ${PYTHON_PATH} -m pip install -r requirements.txt
+                    ${PYTHON_PATH} -m pip install pytest-cov  // 新增：安装pytest-cov
                 """
             }
         }
@@ -48,15 +49,14 @@ pipeline {
         stage('Test') {
             steps {
                 bat """
-                    ${PYTHON_PATH} -m pip install pytest
-                    ${PYTHON_PATH} -m pytest --cov=app tests/ --cov-report=html
+                    ${PYTHON_PATH} -m pytest --cov=app tests/ --cov-report=html --cov-report=term-missing
                 """
             }
             post {
                 always {
-                    publishHTML(target: [
-                        allowMissing: false,
-                        alwaysLinkToLastBuild: false,
+                    publishHTML([
+                        allowMissing: true,  // 重要：改为true，避免目录不存在时报错
+                        alwaysLinkToLastBuild: true,
                         keepAll: true,
                         reportDir: 'htmlcov',
                         reportFiles: 'index.html',
