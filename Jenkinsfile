@@ -35,15 +35,19 @@ pipeline {
             steps {
                 bat """
                     @echo off
+                    echo "=== 升级pip ==="
                     ${PYTHON_PATH} -m pip install --upgrade pip
-                    ${PYTHON_PATH} -m pip install -r requirements.txt
-                    ${PYTHON_PATH} -m pip install pytest-cov  // 新增：安装pytest-cov
+
+                    echo "=== 直接安装所有依赖包（绕过requirements.txt问题）==="
+                    ${PYTHON_PATH} -m pip install Flask==2.0.1 Werkzeug==2.0.3 pytest==7.4.3 coverage==7.3.2 flake8==7.3.0 pytest-cov==4.1.0
+
+                    echo "=== 依赖安装完成 ==="
                 """
             }
         }
         stage('Lint') {
             steps {
-                bat "${PYTHON_PATH} -m pip install flake8 && ${PYTHON_PATH} -m flake8 app.py tests/"
+                bat "${PYTHON_PATH} -m flake8 app.py tests/"
             }
         }
         stage('Test') {
@@ -55,7 +59,7 @@ pipeline {
             post {
                 always {
                     publishHTML([
-                        allowMissing: true,  // 重要：改为true，避免目录不存在时报错
+                        allowMissing: true,
                         alwaysLinkToLastBuild: true,
                         keepAll: true,
                         reportDir: 'htmlcov',
@@ -76,7 +80,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo 'Deploying application...'
-                bat "start ${PYTHON_PATH} app.py"  // 启动Flask应用（按需调整）
+                bat "start ${PYTHON_PATH} app.py"
             }
         }
     }
